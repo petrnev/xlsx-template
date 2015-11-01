@@ -29,14 +29,16 @@ namespace xlxs_template
         public string filen;
         private string Excel03ConString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source={0};Extended Properties='Excel 8.0;HDR={1}'";
         private string Excel07ConString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties='Excel 8.0;HDR={1}'";
+        
         public Form1()
         {
             InitializeComponent();
         }
 
-         private void label2_Click(object sender, EventArgs e)
+        private void label2_Click(object sender, EventArgs e)
         {}
-         private void panel1_Paint(object sender, EventArgs e)
+
+        private void panel1_Paint(object sender, EventArgs e)
          { }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -49,7 +51,7 @@ namespace xlxs_template
            {
                comboBox1.Items.Add(items[i].companyname);
            }
-            comboBox1.SelectedIndex = 0;
+            comboBox1.SelectedIndex = 1;
            
         }
 
@@ -71,14 +73,15 @@ namespace xlxs_template
             openFileDialog1.Filter = "allfiles|*.xlsx";
             if (result == DialogResult.OK)
             {
-                lblError.Text = "File Uploaded";
+                lblError.Text = "File Uploading...";
                 lblError.ForeColor = System.Drawing.Color.Green;
             }
-
-            if(!importMethod(lst))
+            else
             {
                 return;
             }
+
+           
             string name = openFileDialog1.FileName;
             string ext = System.IO.Path.GetExtension(openFileDialog1.FileName).ToLower();   
             if (!ext.Equals(".xlsx"))
@@ -102,7 +105,7 @@ namespace xlxs_template
                     conStr = string.Format(Excel07ConString, name, header);
                     break;
             }
-
+            int Totalsheets;
             using (OleDbConnection con = new OleDbConnection(conStr))
             {
                 using (OleDbCommand cmd = new OleDbCommand())
@@ -110,109 +113,156 @@ namespace xlxs_template
                     cmd.Connection = con;
                     con.Open();
                     System.Data.DataTable dtExcelSchema = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
-                    int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
-                    sheetName = dtExcelSchema.Rows[SheetNumber-1]["TABLE_NAME"].ToString();
+                    //int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
+                    Totalsheets=dtExcelSchema.Rows.Count;
+                    //sheetName = dtExcelSchema.Rows[SheetNumber-1]["TABLE_NAME"].ToString();
                     con.Close();
                 }
             }
            // DataTable dt = new DataTable();
             dt = new System.Data.DataTable();
-            using (OleDbConnection con = new OleDbConnection(conStr))
+            System.Data.DataSet ds= new DataSet();
+            int size=0;
+            for(int SheetNo=0;SheetNo<Totalsheets;SheetNo++)
             {
-                using (OleDbCommand cmd = new OleDbCommand())
+                System.Data.DataTable SheetDt= new System.Data.DataTable();
+                using (OleDbConnection con = new OleDbConnection(conStr))
                 {
-                    using (OleDbDataAdapter oda = new OleDbDataAdapter())
+                    using (OleDbCommand cmd = new OleDbCommand())
                     {
-
-                        string[] limit= lst.exportColumnsLocation.Split(':');
-                        cmd.CommandText = "SELECT * From [" + sheetName + "]";
-                        cmd.Connection = con;
                         con.Open();
-                        oda.SelectCommand = cmd;
-                        oda.Fill(dt);
+                        System.Data.DataTable dtExcelSchema = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                        sheetName = dtExcelSchema.Rows[SheetNo]["TABLE_NAME"].ToString();
                         con.Close();
-                        exportbtn.Enabled = true;
-                        //Populate DataGridView.
-                        //dataGridView1.DataSource = dt;
-                    }
-                }
-            }
-
-
-
-            #region -new code for import
-
-            System.Data.DataTable _impdt = ImportDataTable;
-            string[] valname = new string[dt.Rows.Count];
-            for (int a = 0; a < dt.Rows.Count; a++)
-            {
-                for (int b = 0; b < dt.Columns.Count; b++)
-                {
-
-                    for (int f = 0; f < _impdt.Columns.Count; f++)
-                    {
-
-                        if (dt.Rows[a][b].ToString() == _impdt.Columns[f].ColumnName)
+                        using (OleDbDataAdapter oda = new OleDbDataAdapter())
                         {
 
-                            //int remainig = a;
-                            //string[] valname=new  string[dt.Rows.Count-a];
-                            int d = 0;
-                            for (int c = a; c < dt.Rows.Count; c++)
-                            {
-                                if (valname[d] == null)
-                                {
-                                    valname[d] = dt.Rows[c][b].ToString();
-                                }
-                                else
-                                {
-                                    valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
-                                }
-                                d++;
-                            }
-
+                            string[] limit= lst.exportColumnsLocation.Split(':');
+                            cmd.CommandText = "SELECT * From [" + sheetName + "]";
+                            cmd.Connection = con;
+                            con.Open();
+                            oda.SelectCommand = cmd;
+                            oda.Fill(SheetDt);
+                            con.Close();
+                            //exportbtn.Enabled = true;
+                            //Populate DataGridView.
+                            //dataGridView1.DataSource = dt;
                         }
-
                     }
-
-                    #region -oldcode
-                    //if (dt.Rows[a][b].ToString() == "name" || dt.Rows[a][b].ToString() == "surname" || dt.Rows[a][b].ToString() == "Divisions")
-                    //{
-
-                    //    int remainig = a;
-                    //    //string[] valname=new  string[dt.Rows.Count-a];
-                    //    int d = 0;
-                    //    for (int c = a + 1; c < dt.Rows.Count; c++)
-                    //    {
-                    //        if (valname[d] == null)
-                    //        {
-                    //            valname[d] = dt.Rows[c][b].ToString();
-                    //        }
-                    //        else
-                    //        {
-                    //            valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
-                    //        }
-                    //        d++;
-                    //    }
-
-                    //}
-                    #endregion
-
+                }
+                if(SheetDt!=null)
+                {
+                    ds.Tables.Add(SheetDt);
+                    size=size+SheetDt.Rows.Count;
                 }
             }
 
+            if (!importMethod(lst,Totalsheets))
+            {
+                return;
+            }
+
+            ds = RemoveTables(ds, lst);
+            #region -new code for import
+            string[] valname=new string[size];
+            int Position = 0;
+            int[] posIndex = new int[ds.Tables.Count];
+            for (int TotalTables = 0; TotalTables < ds.Tables.Count; TotalTables++)
+            {
+               
+                if(TotalTables==0)
+                {
+                   posIndex[TotalTables] = Position; 
+                   Position = populateDataTables(ds.Tables[TotalTables], valname, Position);    
+                }
+                else
+                {
+                    posIndex[TotalTables] = Position;
+                    Position = populateDataTables(ds.Tables[TotalTables], valname, Position);  
+                }
+            }
+
+            System.Data.DataTable _impdt = ImportDataTable;
+            #region -oldcode
+            //string[] valname = new string[dt.Rows.Count];
+            //for (int a = 0; a < dt.Rows.Count; a++)
+            //{
+            //    for (int b = 0; b < dt.Columns.Count; b++)
+            //    {
+
+            //        for (int f = 0; f < _impdt.Columns.Count; f++)
+            //        {
+
+            //            if (dt.Rows[a][b].ToString() == _impdt.Columns[f].ColumnName)
+            //            {
+
+            //                //int remainig = a;
+            //                //string[] valname=new  string[dt.Rows.Count-a];
+            //                int d = 0;
+            //                for (int c = a; c < dt.Rows.Count; c++)
+            //                {
+            //                    if (valname[d] == null)
+            //                    {
+            //                        valname[d] = dt.Rows[c][b].ToString();
+            //                    }
+            //                    else
+            //                    {
+            //                        valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
+            //                    }
+            //                    d++;
+            //                }
+
+            //            }
+
+            //        }
+
+            //        #region -oldcode
+            //        //if (dt.Rows[a][b].ToString() == "name" || dt.Rows[a][b].ToString() == "surname" || dt.Rows[a][b].ToString() == "Divisions")
+            //        //{
+
+            //        //    int remainig = a;
+            //        //    //string[] valname=new  string[dt.Rows.Count-a];
+            //        //    int d = 0;
+            //        //    for (int c = a + 1; c < dt.Rows.Count; c++)
+            //        //    {
+            //        //        if (valname[d] == null)
+            //        //        {
+            //        //            valname[d] = dt.Rows[c][b].ToString();
+            //        //        }
+            //        //        else
+            //        //        {
+            //        //            valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
+            //        //        }
+            //        //        d++;
+            //        //    }
+
+            //        //}
+            //        #endregion
+
+            //    }
+            //}
+            #endregion
             Setting _setting = LoadJsonSettings();
             string[] newarray = valname.Where(c => c != null).ToArray();
 
             for (int h = 0; h < newarray.Count(); h++)
             {
                 string[] val = newarray[h].Split(',');
-                if (h == 0)
+                //if (h == 0)
+                //{
+                //    _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
+                //    //DataTableExtensions dte = new DataTableExtensions();
+                //    //_impdt = dte.SetColumnsOrder(_impdt, val);
+                //}
+                for (int match = 0; match < posIndex.Count(); match++)
                 {
-                    _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
-                    //DataTableExtensions dte = new DataTableExtensions();
-                    //_impdt = dte.SetColumnsOrder(_impdt, val);
+                    if (h == posIndex[match])
+                    {
+                        _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
+                    }
+                
                 }
+
                 DataRow row = _impdt.NewRow();
 
                 for (int g = 0; g < _impdt.Columns.Count; g++)
@@ -224,21 +274,116 @@ namespace xlxs_template
             }
 
 
+            for (int rem = 0; rem < posIndex.Count(); rem++)
+            {
+                _impdt.Rows.RemoveAt(posIndex[rem]-rem);
+            }
+
             #endregion
 
-            ////openFileDialog1.FileName.
-            foreach (string item in openFileDialog1.FileNames)
-            {
-                _nameofFile = item.Split('\\');
+                ////openFileDialog1.FileName.
+                foreach (string item in openFileDialog1.FileNames)
+                {
+                    _nameofFile = item.Split('\\');
 
-                //File.Copy(item, @"Images\" + FilenameName[FilenameName.Length - 1]);
-                //count++;
-            }
+                    //File.Copy(item, @"Images\" + FilenameName[FilenameName.Length - 1]);
+                    //count++;
+                }
 
             string[] newname = _nameofFile[_nameofFile.Length - 1].Split('.');
             filen = newname[0];
-            
+            exportbtn.Enabled = true;
+            lblError.Text = "File Uploaded";
+            lblError.ForeColor = System.Drawing.Color.Green;
           
+        }
+
+        public DataSet RemoveTables(DataSet ds,Setting _setting)
+        {
+            Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
+            Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
+             openFileDialog1.FileName,
+             Type.Missing, true, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing);
+            DataSet _newds=ds;
+            int TablesCount=ds.Tables.Count;
+            int iCounter = 0;
+            for (int TableNumber = 0; TableNumber < TablesCount; TableNumber++)
+            {
+                if (!CheckKeyword(_setting, TableNumber,excel_app,workbook))
+                {
+                    _newds.Tables.RemoveAt(TableNumber-iCounter);
+                    iCounter++;
+                }
+            }
+
+            #region -- Checking export columns location
+            int Jcounter = 0;
+            for (int TableNumber = 0; TableNumber < ds.Tables.Count; TableNumber++)
+            {
+                int SheetNumber = Int32.Parse(ds.Tables[TableNumber].TableName.Substring(ds.Tables[TableNumber].TableName.Length-1));
+                Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber];
+                Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.exportColumnsLocation, Type.Missing);        //"A5:I10"
+                SetTitleAndListValues(sheet, 1, 1);
+                //range.Columns.ClearFormats();
+                //range.Rows.ClearFormats();
+                sheet.Columns.ClearFormats();
+                sheet.Rows.ClearFormats();
+                System.Data.DataTable dtab = new System.Data.DataTable();
+                int Totalcol = range.Columns.Count;
+                int Totalrows = range.Rows.Count;
+                object[,] range_values = (object[,])range.Value2;
+
+                for (int i = 1; i <= Totalrows; i++)
+                {
+
+                    for (int j = 1; j <= Totalcol; j++)
+                    {
+                        object _currentCell = (object)range_values[i, j];
+
+
+                        if (_currentCell != null)     //&&( _currentCell.ToString() == "name" || _currentCell.ToString() == "surname" || _currentCell.ToString() == "division" || _currentCell.ToString() == "hour")
+                        {
+                            for (int t = 0; t < _setting.exportColumns.Count; t++)
+                            {
+                                if (_currentCell.ToString().ToLower() == _setting.exportColumns[t].ToLower())
+                                {
+                                    dtab.Columns.Add(_currentCell.ToString());
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+
+            #region oldcode
+		                //workbook.Close(false, Type.Missing, Type.Missing);
+
+                //if (dtab.Columns.Count < 1)
+                //{
+                //    lblError.Text = "Columns are not in given locations";
+                //    lblError.ForeColor = System.Drawing.Color.Red;
+                //    return false;
+                //}
+                //else
+                //{
+                //    ImportDataTable = dtab;
+                //     
+
+                //}
+            #endregion
+                if (dtab.Columns.Count <1)
+                {
+                    ds.Tables.RemoveAt(TableNumber-Jcounter);
+                    Jcounter++;
+                }
+            }
+            #endregion
+            workbook.Close(false, Type.Missing, Type.Missing);
+            return ds;
         }
 
         public List<Item> LoadJson()
@@ -335,20 +480,26 @@ namespace xlxs_template
                 {
                     if (items[i].companyname == cmpname.Text)
                     {
-                        c= Int32.Parse(items[i].id);
-                        items.Remove(items[i]);
-
-                        items.Add(new Item()
+                        DialogResult result1 = MessageBox.Show("Do you want to update current company information?","Update Alert",MessageBoxButtons.YesNo);
+                        if (result1 == DialogResult.Yes)
                         {
-                            companyname = cmpname.Text,
-                            description = description.Text,
-                            street = street.Text,
-                            region = region.Text,
-                            id = c.ToString(),
-                            city = city.Text
+                            c = Int32.Parse(items[i].id);
+                            items.Remove(items[i]);
 
-                        });
+                            items.Add(new Item()
+                            {
+                                companyname = cmpname.Text,
+                                description = description.Text,
+                                street = street.Text,
+                                region = region.Text,
+                                id = c.ToString(),
+                                city = city.Text
+
+                            });
+                            
+                        }
                         _isupdate = true;
+                        break;
                     }
                     
                 }
@@ -374,6 +525,7 @@ namespace xlxs_template
 
             List<Item> newitems= LoadJson();
             populateCombo(newitems);
+
         }
 
         private void deletbtn_Click(object sender, EventArgs e)
@@ -573,61 +725,168 @@ namespace xlxs_template
         
         }
 
-        public bool importMethod(Setting _setting)
+        //public bool importMethod(Setting _setting,int TotalSheet)
+        //{
+
+        //    bool status = CheckKeyword(_setting);
+        //    if (status == true)
+        //    {
+        //        Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
+        //        Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
+        //         openFileDialog1.FileName,
+        //         Type.Missing, true, Type.Missing, Type.Missing,
+        //         Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+        //         Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+        //         Type.Missing, Type.Missing);
+        //        int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
+        //        Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber];
+        //        Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.exportColumnsLocation, Type.Missing);        //"A5:I10"
+        //        SetTitleAndListValues(sheet, 1, 1);
+        //        //range.Columns.ClearFormats();
+        //        //range.Rows.ClearFormats();
+        //        sheet.Columns.ClearFormats();
+        //        sheet.Rows.ClearFormats();
+
+        //        int Totalcol = range.Columns.Count;
+        //        int Totalrows = range.Rows.Count;
+        //        object[,] range_values = (object[,])range.Value2;
+        //        System.Data.DataTable dtab = new System.Data.DataTable();
+        //        for (int i = 1; i <= Totalrows; i++)
+        //        {
+
+        //            for (int j = 1; j <= Totalcol; j++)
+        //            {
+        //                object _currentCell = (object)range_values[i, j];
+
+
+        //                if (_currentCell != null)     //&&( _currentCell.ToString() == "name" || _currentCell.ToString() == "surname" || _currentCell.ToString() == "division" || _currentCell.ToString() == "hour")
+        //                {
+        //                    for (int t = 0; t < _setting.exportColumns.Count; t++)
+        //                    {
+        //                        if (_currentCell.ToString().ToLower() == _setting.exportColumns[t].ToLower())
+        //                        {
+        //                            dtab.Columns.Add(_currentCell.ToString());
+        //                        }
+        //                    }
+
+        //                }
+        //            }
+
+        //        }
+
+        //        workbook.Close(false, Type.Missing, Type.Missing);
+
+        //        if(dtab.Columns.Count < 1)
+        //        {
+        //            lblError.Text="Columns are not in given locations";
+        //            lblError.ForeColor=System.Drawing.Color.Red;
+        //            return false;
+        //        }
+        //        else
+        //        {
+        //            ImportDataTable = dtab;
+        //            return true;
+        //        }
+                   
+        //    }
+        //    else
+        //    {
+        //        lblError.Text="Keyword is not found in the Given location";
+        //        lblError.ForeColor=System.Drawing.Color.Red;
+        //        return false;
+        //    }
+
+        //}
+
+        public bool importMethod(Setting _setting, int TotalSheet)
         {
-
-            bool status = CheckKeyword(_setting);
-            if (status == true)
+            System.Data.DataTable dtab = new System.Data.DataTable();
+            bool checkedAllSheets = false;
+            Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
+            Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
+             openFileDialog1.FileName,
+             Type.Missing, true, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+             Type.Missing, Type.Missing);
+            for (int SheetCounter = 0; SheetCounter < TotalSheet; SheetCounter++)
             {
-                Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
-                Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
-                 openFileDialog1.FileName,
-                 Type.Missing, true, Type.Missing, Type.Missing,
-                 Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                 Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-                 Type.Missing, Type.Missing);
-                int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
-                Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber];
-                Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.exportColumnsLocation, Type.Missing);        //"A5:I10"
-                SetTitleAndListValues(sheet, 1, 1);
-                //range.Columns.ClearFormats();
-                //range.Rows.ClearFormats();
-                sheet.Columns.ClearFormats();
-                sheet.Rows.ClearFormats();
-
-                int Totalcol = range.Columns.Count;
-                int Totalrows = range.Rows.Count;
-                object[,] range_values = (object[,])range.Value2;
-                System.Data.DataTable dtab = new System.Data.DataTable();
-                for (int i = 1; i <= Totalrows; i++)
+                bool status = CheckKeyword(_setting,SheetCounter,excel_app,workbook);
+                if (status == true)
                 {
+                    
+                    //int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
+                    Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetCounter+1];
+                    Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.exportColumnsLocation, Type.Missing);        //"A5:I10"
+                    SetTitleAndListValues(sheet, 1, 1);
+                    //range.Columns.ClearFormats();
+                    //range.Rows.ClearFormats();
+                    sheet.Columns.ClearFormats();
+                    sheet.Rows.ClearFormats();
 
-                    for (int j = 1; j <= Totalcol; j++)
+                    int Totalcol = range.Columns.Count;
+                    int Totalrows = range.Rows.Count;
+                    object[,] range_values = (object[,])range.Value2;
+                    
+                    for (int i = 1; i <= Totalrows; i++)
                     {
-                        object _currentCell = (object)range_values[i, j];
 
-
-                        if (_currentCell != null)     //&&( _currentCell.ToString() == "name" || _currentCell.ToString() == "surname" || _currentCell.ToString() == "division" || _currentCell.ToString() == "hour")
+                        for (int j = 1; j <= Totalcol; j++)
                         {
-                            for (int t = 0; t < _setting.exportColumns.Count; t++)
-                            {
-                                if (_currentCell.ToString() == _setting.exportColumns[t])
-                                {
-                                    dtab.Columns.Add(_currentCell.ToString());
-                                }
-                            }
+                            object _currentCell = (object)range_values[i, j];
 
+
+                            if (_currentCell != null)     //&&( _currentCell.ToString() == "name" || _currentCell.ToString() == "surname" || _currentCell.ToString() == "division" || _currentCell.ToString() == "hour")
+                            {
+                                for (int t = 0; t < _setting.exportColumns.Count; t++)
+                                {
+                                    if (_currentCell.ToString().ToLower() == _setting.exportColumns[t].ToLower())
+                                    {
+                                        dtab.Columns.Add(_currentCell.ToString());
+                                    }
+                                }
+
+                            }
                         }
+
                     }
 
+                    //workbook.Close(false, Type.Missing, Type.Missing);
+
+                    //if (dtab.Columns.Count < 1)
+                    //{
+                    //    lblError.Text = "Columns are not in given locations";
+                    //    lblError.ForeColor = System.Drawing.Color.Red;
+                    //    return false;
+                    //}
+                    //else
+                    //{
+                    //    ImportDataTable = dtab;
+                    //    return true;
+                    //}
+                    if (dtab.Columns.Count > 0)
+                    {
+                        checkedAllSheets = true;
+                        break;
+                    }
                 }
-
-                workbook.Close(false, Type.Missing, Type.Missing);
-
-                if(dtab.Columns.Count < 1)
+                else
                 {
-                    lblError.Text="Columns are not in given locations";
-                    lblError.ForeColor=System.Drawing.Color.Red;
+                    //lblError.Text = "Keyword is not found in the Given location";
+                    //lblError.ForeColor = System.Drawing.Color.Red;
+                    //return false;
+                    checkedAllSheets = false;
+                }
+            }
+
+            workbook.Close(false, Type.Missing, Type.Missing);
+
+            if (checkedAllSheets)
+            {
+                if (dtab.Columns.Count < 1)
+                {
+                    lblError.Text = "Columns are not in given locations";
+                    lblError.ForeColor = System.Drawing.Color.Red;
                     return false;
                 }
                 else
@@ -635,12 +894,11 @@ namespace xlxs_template
                     ImportDataTable = dtab;
                     return true;
                 }
-                   
             }
             else
             {
-                lblError.Text="Keyword is not found in te Given location";
-                lblError.ForeColor=System.Drawing.Color.Red;
+                lblError.Text = "Keyword is not found in the Given location";
+                lblError.ForeColor = System.Drawing.Color.Red;
                 return false;
             }
 
@@ -682,17 +940,58 @@ namespace xlxs_template
             //lst.DataSource = values1;
         }
 
-        public bool CheckKeyword(Setting _setting)
+        //public bool CheckKeyword(Setting _setting)
+        //{
+        //    Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
+        //    Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
+        //     openFileDialog1.FileName,
+        //     Type.Missing, true, Type.Missing, Type.Missing,
+        //     Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+        //     Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+        //     Type.Missing, Type.Missing);
+        //    int SheetNumber=Int32.Parse( System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
+        //    Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber];
+        //    Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.tabPatternLocation, Type.Missing);        //"A5:I10"
+        //    SetTitleAndListValues(sheet, 1, 1);
+        //    sheet.Columns.ClearFormats();
+        //    sheet.Rows.ClearFormats();
+
+        //    int Totalcol = range.Columns.Count;
+        //    int Totalrows = range.Rows.Count;
+        //    object[,] range_values = (object[,])range.Value2;
+
+        //    for (int i = 1; i <= Totalrows; i++)
+        //    {
+
+        //        for (int j = 1; j <= Totalcol; j++)
+        //        {
+        //            object _currentCell = (object)range_values[i, j];
+        //            if (_currentCell != null && _currentCell.ToString()==_setting.tabPatternText)
+        //            {
+        //                workbook.Close(false, Type.Missing, Type.Missing);
+        //                return true;
+        //            }
+        //        }
+
+        //    }
+        //    workbook.Close(false, Type.Missing, Type.Missing);
+        //    return false;
+
+        //}
+
+        public bool CheckKeyword(Setting _setting, int SheetNumber, Microsoft.Office.Interop.Excel._Application excel_app, Microsoft.Office.Interop.Excel.Workbook workbook)
         {
-            Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
-            Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
-             openFileDialog1.FileName,
-             Type.Missing, true, Type.Missing, Type.Missing,
-             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-             Type.Missing, Type.Missing, Type.Missing, Type.Missing,
-             Type.Missing, Type.Missing);
-            int SheetNumber=Int32.Parse( System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
-            Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber];
+            //Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
+            //Microsoft.Office.Interop.Excel.Workbook workbook = excel_app.Workbooks.Open(
+            // openFileDialog1.FileName,
+            // Type.Missing, true, Type.Missing, Type.Missing,
+            // Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+            // Type.Missing, Type.Missing, Type.Missing, Type.Missing,
+            // Type.Missing, Type.Missing);
+
+
+            //int SheetNumber = Int32.Parse(System.Configuration.ConfigurationManager.AppSettings["SheetNumber"]);
+            Microsoft.Office.Interop.Excel.Worksheet sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Sheets[SheetNumber+1];
             Microsoft.Office.Interop.Excel.Range range = sheet.get_Range(_setting.tabPatternLocation, Type.Missing);        //"A5:I10"
             SetTitleAndListValues(sheet, 1, 1);
             sheet.Columns.ClearFormats();
@@ -708,15 +1007,15 @@ namespace xlxs_template
                 for (int j = 1; j <= Totalcol; j++)
                 {
                     object _currentCell = (object)range_values[i, j];
-                    if (_currentCell != null && _currentCell.ToString()==_setting.tabPatternText)
+                    if (_currentCell != null && _currentCell.ToString() == _setting.tabPatternText)
                     {
-                        workbook.Close(false, Type.Missing, Type.Missing);
+                        //workbook.Close(false, Type.Missing, Type.Missing);
                         return true;
                     }
                 }
 
             }
-            workbook.Close(false, Type.Missing, Type.Missing);
+            //workbook.Close(false, Type.Missing, Type.Missing);
             return false;
 
         }
@@ -891,19 +1190,19 @@ namespace xlxs_template
                         for (int colsdt = 0; colsdt < dtExp.Columns.Count; colsdt++)
                         {
                             string columnNameofExpdt="{" + dtExp.Columns[colsdt].ColumnName + "}";
-                            if (CurrentVal.ToString() ==columnNameofExpdt)
+                            if (CurrentVal.ToString().ToLower() ==columnNameofExpdt.ToLower())
                             { 
                                 //newWorksheet.Cells[r, c]=dtExp.Rows[]
-                                for (int rr = 1; rr < dtExp.Rows.Count; rr++)
+                                for (int rr = 0; rr < dtExp.Rows.Count; rr++)
                                 {
-                                    if (rr == 1)
-                                    {
-                                        newWorksheet.Cells[r, c] = dtExp.Rows[rr][colsdt].ToString();
-                                    }
-                                    else
-                                    {
-                                        newWorksheet.Cells[r+rr-1, c] = dtExp.Rows[rr][colsdt].ToString();
-                                    }
+                                    //if (rr == 1)
+                                    //{
+                                    //    newWorksheet.Cells[r, c] = dtExp.Rows[rr][colsdt].ToString();
+                                    //}
+                                    //else
+                                    //{
+                                        newWorksheet.Cells[r+rr, c] = dtExp.Rows[rr][colsdt].ToString();
+                                    //}
                                 }
                             }
                         }
@@ -911,28 +1210,84 @@ namespace xlxs_template
                     }
                 }
             }
-            try
-            {
+            //try
+            //{
                 string expPath = System.Configuration.ConfigurationManager.AppSettings["ExportExcelPath"];
                 if (!Directory.Exists(expPath))
                 {
                     Directory.CreateDirectory(expPath);
                 }
-                workbook.SaveAs(expPath+"/" + filen + ".xlsx", Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlExclusive, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
-                lblError.Text = "File Exported Successfully";
-                lblError.ForeColor = System.Drawing.Color.Green;
-            }
-            catch
-            {
-                lblError.Text = "Export Failed";
-                lblError.ForeColor = System.Drawing.Color.Red;
-            }
+                try
+                {
+                    workbook.SaveAs(expPath + "/" + filen + ".xlsx", Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlExclusive, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                }
+                catch
+                {
+                   
+                }
                
             workbook.Close(true, Type.Missing, Type.Missing);
             //excel.Quit(); 
+            #region MyRegion
+            //string FileCreated=expPath+"/" + filen + ".xlsx";
+            //if (File.Exists(FileCreated))
+            //{
+            //    lblError.Text = filen + ".xlsx Exported Successfully";
+            //    lblError.ForeColor = System.Drawing.Color.Red;
+            //}
+            //else
+            //{
+            //    lblError.Text = filen + ".xlsx Exported Successfully";
+            //    lblError.ForeColor = System.Drawing.Color.Green;
+            //} 
+            #endregion
+            lblError.Text = filen + ".xlsx Exported Successfully";
+            lblError.ForeColor = System.Drawing.Color.Green;
         }
-        
-        
+
+        public int populateDataTables(System.Data.DataTable dt,string[] valname,int pos)
+        {
+            System.Data.DataTable _impdt = ImportDataTable;
+            //string[] valname = new string[dt.Rows.Count];
+            for (int a = 0; a < dt.Rows.Count; a++)
+            {
+                for (int b = 0; b < dt.Columns.Count; b++)
+                {
+
+                    for (int f = 0; f < _impdt.Columns.Count; f++)
+                    {
+
+                        if (dt.Rows[a][b].ToString().ToLower() == _impdt.Columns[f].ColumnName.ToLower())
+                        {
+
+                            //int remainig = a;
+                            //string[] valname=new  string[dt.Rows.Count-a];
+                            //int d = 0;
+                            int d = pos;
+                            for (int c = a; c < dt.Rows.Count; c++)
+                            {
+                                if (valname[d] == null)
+                                {
+                                    valname[d] = dt.Rows[c][b].ToString();
+                                }
+                                else
+                                {
+                                    valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
+                                }
+                                d++;
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+
+            var CurrentIndexVar = valname.Select((day, index) => new { Day = day, Index = index }).Where(x => x.Day==null).FirstOrDefault();
+            int CurrentIndex = CurrentIndexVar.Index;
+            return CurrentIndex;
+        }
     
     
     
