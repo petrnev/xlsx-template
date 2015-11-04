@@ -73,8 +73,8 @@ namespace xlxs_template
             openFileDialog1.Filter = "allfiles|*.xlsx";
             if (result == DialogResult.OK)
             {
-                lblError.Text = "File Uploading...";
-                lblError.ForeColor = System.Drawing.Color.Green;
+                lblError.Text = "File Uploading..." + "\n" + lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Green;  
             }
             else
             {
@@ -86,8 +86,8 @@ namespace xlxs_template
             string ext = System.IO.Path.GetExtension(openFileDialog1.FileName).ToLower();   
             if (!ext.Equals(".xlsx"))
             {
-                lblError.Text = "File format should be xlsx";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = lblError.Text + "\nFile format should be xlsx";
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return;
             }
             string[] _nameofFile = new string[5] ;
@@ -167,18 +167,28 @@ namespace xlxs_template
             string[] valname=new string[size];
             int Position = 0;
             int[] posIndex = new int[ds.Tables.Count];
+            int addedrecords = 0;
             for (int TotalTables = 0; TotalTables < ds.Tables.Count; TotalTables++)
             {
                
                 if(TotalTables==0)
                 {
                    posIndex[TotalTables] = Position; 
-                   Position = populateDataTables(ds.Tables[TotalTables], valname, Position);    
+                   Position = populateDataTables(ds.Tables[TotalTables], valname, Position);
+                   addedrecords = Position - 1;
+                   //lblError.Text = lblError.Text + "\n" + addedrecords + " Records are imported from Sheet" + ds.Tables[TotalTables].TableName.Substring(ds.Tables[TotalTables].TableName.Length - 1);
+                   //lblError.ForeColor = System.Drawing.Color.Green;
+                   lblError.Text = addedrecords + " Records are imported from Sheet" + ds.Tables[TotalTables].TableName.Substring(ds.Tables[TotalTables].TableName.Length - 1) + "\n" + lblError.Text;
                 }
                 else
                 {
                     posIndex[TotalTables] = Position;
-                    Position = populateDataTables(ds.Tables[TotalTables], valname, Position);  
+                    Position = populateDataTables(ds.Tables[TotalTables], valname, Position);
+                    addedrecords = Position - addedrecords-TotalTables-1;
+                    //lblError.Text = lblError.Text + "\n" + addedrecords + " Records are imported from Sheet" + ds.Tables[TotalTables].TableName.Substring(ds.Tables[TotalTables].TableName.Length - 1);
+                    //lblError.ForeColor = System.Drawing.Color.Green;
+                    lblError.Text = addedrecords + " Records are imported from Sheet" + ds.Tables[TotalTables].TableName.Substring(ds.Tables[TotalTables].TableName.Length - 1) + "\n" + lblError.Text;
+                    addedrecords = Position - TotalTables - 1;
                 }
             }
 
@@ -247,7 +257,7 @@ namespace xlxs_template
 
             for (int h = 0; h < newarray.Count(); h++)
             {
-                string[] val = newarray[h].Split(',');
+                string[] val = newarray[h].Split(';');
                 //if (h == 0)
                 //{
                 //    _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
@@ -258,6 +268,7 @@ namespace xlxs_template
                 {
                     if (h == posIndex[match])
                     {
+                        //lblError.Text=lblError.Text+""
                         _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
                     }
                 
@@ -293,8 +304,8 @@ namespace xlxs_template
             string[] newname = _nameofFile[_nameofFile.Length - 1].Split('.');
             filen = newname[0];
             exportbtn.Enabled = true;
-            lblError.Text = "File Uploaded";
-            lblError.ForeColor = System.Drawing.Color.Green;
+            lblError.Text = "File Uploaded"+"\n"+lblError.Text;
+            //lblError.ForeColor = System.Drawing.Color.Green;
           
         }
 
@@ -391,12 +402,12 @@ namespace xlxs_template
             string path = System.Configuration.ConfigurationManager.AppSettings["companyFilePath"];
             if (!File.Exists(path))
             {
-                lblError.Text = "companies.Json file does not exist";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = "companies.Json file does not exist" + "\n" + lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return null;   
             }
 
-            lblError.Text = string.Empty;
+            //lblError.Text = string.Empty;
             using (StreamReader r = new StreamReader(path))
             {
                 string json = r.ReadToEnd();
@@ -412,12 +423,12 @@ namespace xlxs_template
             string path = System.Configuration.ConfigurationManager.AppSettings["settingFilePath"];
             if (!File.Exists(path))
             {
-                lblError.Text = "companies.Json file does not exist";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = lblError.Text+"\ncompanies.Json file does not exist"+"\n"+lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 //return null;
             }
            
-            lblError.Text = string.Empty;
+            //lblError.Text = string.Empty;
             using (StreamReader rs = new StreamReader(path))
             {
                 string jsons = rs.ReadToEnd();
@@ -468,8 +479,8 @@ namespace xlxs_template
             List<Item> items = LoadJson();
             if (items == null)
             {
-                lblError.Text = "You cannot save data now";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = "You cannot save data now"+"\n"+lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return;
             }
 
@@ -534,8 +545,8 @@ namespace xlxs_template
             List<Item> items = LoadJson();
             if (items == null)
             {
-                lblError.Text = "You cannot delete data now";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = "You cannot delete data now"+"\n"+lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return;
             }
             for (int i = 0; i < items.Count; i++)
@@ -712,8 +723,9 @@ namespace xlxs_template
             string path = System.Configuration.ConfigurationManager.AppSettings["settingFilePath"];
             if(!File.Exists(path))
             {
-                lblError.Text="Setting.json is not found";
-                lblError.ForeColor=System.Drawing.Color.Red;
+                lblError.Text="Setting.json is not found"+"\n"+lblError.Text;
+                //lblError.ForeColor=System.Drawing.Color.Red;
+                return null;
             }
 
             using (StreamReader r = new StreamReader(path))
@@ -885,8 +897,8 @@ namespace xlxs_template
             {
                 if (dtab.Columns.Count < 1)
                 {
-                    lblError.Text = "Columns are not in given locations";
-                    lblError.ForeColor = System.Drawing.Color.Red;
+                    lblError.Text = "Columns are not in given locations"+"\n"+lblError.Text;
+                    //lblError.ForeColor = System.Drawing.Color.Red;
                     return false;
                 }
                 else
@@ -897,8 +909,8 @@ namespace xlxs_template
             }
             else
             {
-                lblError.Text = "Keyword is not found in the Given location";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = "Keyword is not found in the Given location"+"\n"+lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return false;
             }
 
@@ -930,10 +942,11 @@ namespace xlxs_template
             // Convert this into a 1-dimensional array.
             // Note that the Range's array has lower bounds 1.
             int num_items = range_values.GetUpperBound(0);
-            string[] values1 = new string[num_items];
+            //string[] values1 = new string[num_items];
+            object[] values1 = new object[num_items];
             for (int i = 0; i < num_items; i++)
             {
-                values1[i] = (string)range_values[i + 1, 1];
+                values1[i] = (object)range_values[i + 1, 1];
             }
 
             // Display the values in the ListBox.
@@ -1127,15 +1140,34 @@ namespace xlxs_template
             
             return ImportDataTable;// wrong code
         }
-        
+
+        public System.Data.DataTable DeleteEmptyRows(System.Data.DataTable EmptDt)
+        {
+            
+            for (int i = 0; i < EmptDt.Rows.Count; i++)
+            {
+                String valuesarr = String.Empty;
+                List<object> lst = EmptDt.Rows[i].ItemArray.ToList();
+                foreach (Object s in lst)
+                {
+                    valuesarr += s.ToString();
+                }
+
+                if (String.IsNullOrEmpty(valuesarr))
+                    EmptDt.Rows.RemoveAt(i);
+            }
+            return EmptDt;
+        }
+
         public void ExportMethod()
         {
             System.Data.DataTable dtExp=ImportDataTable;
+            dtExp = DeleteEmptyRows(dtExp);
             string templateFile=System.Configuration.ConfigurationManager.AppSettings["templateFilePath"];//@"C:\Users\muhammad.habib\Downloads\new folder\template1.xlsx"
              if (!File.Exists(templateFile))
             {
-                lblError.Text = "template.xlsx file does not exist";
-                lblError.ForeColor = System.Drawing.Color.Red;
+                lblError.Text = "\ntemplate.xlsx file does not exist" + "\n" + lblError.Text;
+                //lblError.ForeColor = System.Drawing.Color.Red;
                 return;   
             }
             Microsoft.Office.Interop.Excel._Application excel_app = new Microsoft.Office.Interop.Excel.Application();
@@ -1166,23 +1198,23 @@ namespace xlxs_template
                     object CurrentVal= (object)range_values[r,c] ;
                     if ( CurrentVal!=null)
                     {
-                        if (CurrentVal.ToString() == "{companyName}")
+                        if (CurrentVal.ToString().ToLower() == "{companyname}")
                         {
                             newWorksheet.Cells[r, c] = cmpname.Text;
                         }
-                        else if (CurrentVal.ToString() == "{description}")
+                        else if (CurrentVal.ToString().ToLower() == "{description}")
                         {
                             newWorksheet.Cells[r, c] = description.Text;
                         }
-                        else if (CurrentVal.ToString() == "{city}")
+                        else if (CurrentVal.ToString().ToLower() == "{city}")
                         {
                             newWorksheet.Cells[r, c] = city.Text;
                         }
-                        else if (CurrentVal.ToString() == "{street}")
+                        else if (CurrentVal.ToString().ToLower() == "{street}")
                         {
                             newWorksheet.Cells[r, c] = street.Text;
                         }
-                        else if (CurrentVal.ToString() == "{region}")
+                        else if (CurrentVal.ToString().ToLower() == "{region}")
                         {
                             newWorksheet.Cells[r, c] = region.Text;
                         }
@@ -1241,8 +1273,8 @@ namespace xlxs_template
             //    lblError.ForeColor = System.Drawing.Color.Green;
             //} 
             #endregion
-            lblError.Text = filen + ".xlsx Exported Successfully";
-            lblError.ForeColor = System.Drawing.Color.Green;
+            lblError.Text = "File Exported Successfully" + "\n" + lblError.Text;
+            //lblError.ForeColor = System.Drawing.Color.Green;
         }
 
         public int populateDataTables(System.Data.DataTable dt,string[] valname,int pos)
@@ -1272,7 +1304,7 @@ namespace xlxs_template
                                 }
                                 else
                                 {
-                                    valname[d] = valname[d] + "," + dt.Rows[c][b].ToString();
+                                    valname[d] = valname[d] + ";" + dt.Rows[c][b].ToString();
                                 }
                                 d++;
                             }
@@ -1287,6 +1319,11 @@ namespace xlxs_template
             var CurrentIndexVar = valname.Select((day, index) => new { Day = day, Index = index }).Where(x => x.Day==null).FirstOrDefault();
             int CurrentIndex = CurrentIndexVar.Index;
             return CurrentIndex;
+        }
+
+        private void panel3_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     
     
