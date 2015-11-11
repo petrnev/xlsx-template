@@ -157,7 +157,7 @@ namespace xlxs_template
                 }
             }
 
-            if (!importMethod(lst,Totalsheets))
+            if (!importMethod(lst))//if (!importMethod(lst,Totalsheets))
             {
                 return;
             }
@@ -257,7 +257,7 @@ namespace xlxs_template
 
             for (int h = 0; h < newarray.Count(); h++)
             {
-                string[] val = newarray[h].Split(';');
+                string[] val = newarray[h].Split('#');
                 //if (h == 0)
                 //{
                 //    _impdt = DataTableExtensions.SetColumnsOrder(_impdt, val);
@@ -319,7 +319,8 @@ namespace xlxs_template
              Type.Missing, Type.Missing, Type.Missing, Type.Missing,
              Type.Missing, Type.Missing);
             DataSet _newds=ds;
-            int TablesCount=ds.Tables.Count;
+            int TablesCounters=ds.Tables.Count;
+            int TablesCount = workbook.Sheets.Count;
             int iCounter = 0;
             for (int TableNumber = 0; TableNumber < TablesCount; TableNumber++)
             {
@@ -810,7 +811,7 @@ namespace xlxs_template
 
         //}
 
-        public bool importMethod(Setting _setting, int TotalSheet)
+        public bool importMethod(Setting _setting)
         {
             System.Data.DataTable dtab = new System.Data.DataTable();
             bool checkedAllSheets = false;
@@ -821,6 +822,7 @@ namespace xlxs_template
              Type.Missing, Type.Missing, Type.Missing, Type.Missing,
              Type.Missing, Type.Missing, Type.Missing, Type.Missing,
              Type.Missing, Type.Missing);
+            int TotalSheet = workbook.Sheets.Count;
             for (int SheetCounter = 0; SheetCounter < TotalSheet; SheetCounter++)
             {
                 bool status = CheckKeyword(_setting,SheetCounter,excel_app,workbook);
@@ -1304,7 +1306,7 @@ namespace xlxs_template
                                 }
                                 else
                                 {
-                                    valname[d] = valname[d] + ";" + dt.Rows[c][b].ToString();
+                                    valname[d] = valname[d] + "#" + dt.Rows[c][b].ToString();
                                 }
                                 d++;
                             }
